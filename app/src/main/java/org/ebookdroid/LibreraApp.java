@@ -1,6 +1,8 @@
 package org.ebookdroid;
 
+import android.content.ComponentName;
 import android.content.Context;
+import android.content.pm.PackageManager;
 import android.os.Build;
 import android.os.Environment;
 
@@ -24,13 +26,10 @@ import java.io.PrintWriter;
 import java.io.StringWriter;
 
 
-
-
 public class LibreraApp extends MultiDexApplication {
 
-    public static Context context;
     public final static int MUPDF_VERSION;
-
+    public static Context context;
 
     static {
         System.loadLibrary("mypdf");
@@ -44,12 +43,16 @@ public class LibreraApp extends MultiDexApplication {
         super.onCreate();
 
 
-
         context = getApplicationContext();
         Dips.init(this);
 
-        if (!AppsConfig.checkIsProInstalled(this)) {
-            MobileAds.initialize(this, Apps.getMetaData(this, "com.google.android.gms.ads.APPLICATION_ID"));
+        try {
+            if (!AppsConfig.checkIsProInstalled(this)) {
+                MobileAds.initialize(this, Apps.getMetaData(this, "com.google.android.gms.ads.APPLICATION_ID"));
+            }
+        } catch (Exception e) {
+            AppsConfig.IS_NO_ADS = true;
+            LOG.e(e);
         }
 
 
@@ -107,6 +110,7 @@ public class LibreraApp extends MultiDexApplication {
                 }
             });
         }
+
 
 
     }

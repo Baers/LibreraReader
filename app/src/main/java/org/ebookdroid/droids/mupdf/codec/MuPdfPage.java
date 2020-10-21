@@ -7,6 +7,7 @@ import android.graphics.Matrix;
 import android.graphics.PointF;
 import android.graphics.Rect;
 import android.graphics.RectF;
+import android.util.DisplayMetrics;
 
 import com.foobnix.android.utils.LOG;
 import com.foobnix.android.utils.TxtUtils;
@@ -272,6 +273,8 @@ public class MuPdfPage extends AbstractCodecPage {
             if (MagicHelper.isNeedBC) {
                 MagicHelper.applyQuickContrastAndBrightness(bufferarray, width, height);
             }
+
+
             BitmapRef b;
             if (false) {
                 b = BitmapManager.getBitmap("PDF page", width, height, Config.RGB_565);
@@ -279,6 +282,14 @@ public class MuPdfPage extends AbstractCodecPage {
                 b = new BitmapRef(Bitmap.createBitmap(width, height, Config.RGB_565), 0l);
             }
             b.getBitmap().setPixels(bufferarray, 0, width, 0, 0, width, height);
+            if (AppState.get().isMirrorImage) {
+                Matrix m = new Matrix();
+                m.preScale(-1, 1);
+                Bitmap dst = Bitmap.createBitmap(b.getBitmap(), 0, 0, width, height, m, false);
+                b.getBitmap().recycle();
+                b.setBitmap(dst);
+            }
+
             return b;
         } finally {
             TempHolder.lock.unlock();
@@ -289,6 +300,11 @@ public class MuPdfPage extends AbstractCodecPage {
 
     @Override
     public List<PageLink> getPageLinks() {
+        if (pageNumber == 1) {
+            LOG.d("skip links for 1 page");
+            return new ArrayList<PageLink>();
+        }
+
         TempHolder.lock.lock();
         try {
             return MuPdfLinks.getPageLinks(docHandle, pageHandle, pageBounds);
@@ -417,6 +433,10 @@ public class MuPdfPage extends AbstractCodecPage {
 
     @Override
     public TextWord[][] getText() {
+        if (pageNumber == 1) {
+            LOG.d("skip text for 1 page");
+            return new TextWord[0][0];
+        }
 
 
         if (LibreraApp.MUPDF_VERSION == AppsConfig.MUPDF_1_11) {

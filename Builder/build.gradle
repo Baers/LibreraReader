@@ -2,8 +2,8 @@ apply plugin: 'java-library'
 
 dependencies {
     implementation fileTree(dir: 'libs', include: ['*.jar'])
-    runtime fileTree(dir: 'libs', include: ['*.aar', '*.jar'], exclude: [])
-    compile project(path: ':smartreflow')
+    runtimeOnly fileTree(dir: 'libs', include: ['*.aar', '*.jar'], exclude: [])
+    //implementation project(':smartreflow')
 }
 
 sourceCompatibility = "7"

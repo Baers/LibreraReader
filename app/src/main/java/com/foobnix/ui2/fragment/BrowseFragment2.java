@@ -39,6 +39,7 @@ import androidx.recyclerview.widget.StaggeredGridLayoutManager;
 import com.cloudrail.si.interfaces.CloudStorage;
 import com.cloudrail.si.types.CloudMetaData;
 import com.foobnix.StringResponse;
+import com.foobnix.android.utils.Apps;
 import com.foobnix.android.utils.Dips;
 import com.foobnix.android.utils.LOG;
 import com.foobnix.android.utils.ResultResponse;
@@ -75,6 +76,7 @@ import com.foobnix.ui2.fast.FastScrollRecyclerView;
 
 import org.ebookdroid.BookType;
 import org.ebookdroid.droids.FolderContext;
+import org.ebookdroid.droids.MdContext;
 
 import java.io.File;
 import java.util.ArrayList;
@@ -103,6 +105,7 @@ public class BrowseFragment2 extends UIFragment<FileMeta> {
     Map<String, Integer> rememberPos = new HashMap<String, Integer>();
     String displayPath;
     boolean isRestorePos = false;
+    int itemsCount;
     private LinearLayout paths;
     private TextView stub;
     private ImageView onListGrid, starIcon, onSort, starIconDir, sortOrder, createFolder;
@@ -196,6 +199,7 @@ public class BrowseFragment2 extends UIFragment<FileMeta> {
                 onSort.setImageResource(AppState.get().sortByReverse ? R.drawable.glyphicons_410_sort_by_attributes_alt : R.drawable.glyphicons_409_sort_by_attributes);
                 sortOrder.setImageResource(AppState.get().sortByReverse ? R.drawable.glyphicons_601_chevron_up : R.drawable.glyphicons_602_chevron_down);
 
+
                 populate();
 
             }
@@ -226,14 +230,23 @@ public class BrowseFragment2 extends UIFragment<FileMeta> {
 
             @Override
             public void onClick(View v) {
-                File lxml = FolderContext.genarateXML(searchAdapter.getItemsList(), displayPath, true);
-                ExtUtils.showDocumentWithoutDialog2(getActivity(), lxml);
+                File file = new File(displayPath, MdContext.SUMMARY_MD);
+                if (file.isFile()) {
+                    ExtUtils.openFile(getActivity(), new FileMeta(file.getPath()));
+                } else {
+                    File lxml = FolderContext.genarateXML(searchAdapter.getItemsList(), displayPath, true);
+                    ExtUtils.showDocumentWithoutDialog2(getActivity(), lxml);
+                }
             }
         });
         openAsBook.setVisibility(View.GONE);
 
         onSort.setImageResource(AppState.get().sortByReverse ? R.drawable.glyphicons_410_sort_by_attributes_alt : R.drawable.glyphicons_409_sort_by_attributes);
         sortOrder.setImageResource(AppState.get().sortByReverse ? R.drawable.glyphicons_601_chevron_up : R.drawable.glyphicons_602_chevron_down);
+
+        sortOrder.setContentDescription(getString(R.string.ascending) + " " + getString(R.string.descending));
+        onSort.setContentDescription(getString(R.string.cd_sort_results));
+
 
         onAction = view.findViewById(R.id.onAction);
         editPath = (EditText) view.findViewById(R.id.editPath);
@@ -884,6 +897,7 @@ public class BrowseFragment2 extends UIFragment<FileMeta> {
             LOG.d("rememberPos go", displayPath, pos);
         }
 
+
     }
 
     public boolean onBackAction() {
@@ -948,7 +962,7 @@ public class BrowseFragment2 extends UIFragment<FileMeta> {
             }
         }
     }
-    int itemsCount;
+
     public void displayItems(List<FileMeta> items) {
         itemsCount = items.size();
         if (searchAdapter == null) {
@@ -1007,7 +1021,13 @@ public class BrowseFragment2 extends UIFragment<FileMeta> {
 
         }, 100);
 
-        openAsBook.setVisibility(TxtUtils.visibleIf(FolderContext.isFolderWithImage(items)));
+        if (new File(displayPath, MdContext.SUMMARY_MD).isFile()) {
+            openAsBook.setVisibility(View.VISIBLE);
+        } else if (FolderContext.isFolderWithImage(items)) {
+            openAsBook.setVisibility(View.VISIBLE);
+        } else {
+            openAsBook.setVisibility(View.GONE);
+        }
 
     }
 
@@ -1178,6 +1198,8 @@ public class BrowseFragment2 extends UIFragment<FileMeta> {
             stub.setTextColor(getResources().getColor(R.color.white));
             stub.setSingleLine();
             paths.addView(stub);
+
+            Apps.accessibilityText(getActivity(), split[split.length - 1], getString(R.string.folder_selected), "" + itemsCount);
 
         }
 

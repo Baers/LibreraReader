@@ -21,8 +21,10 @@ import androidx.viewpager.widget.ViewPager;
 
 import com.foobnix.android.utils.Dips;
 import com.foobnix.android.utils.LOG;
+import com.foobnix.android.utils.TxtUtils;
 import com.foobnix.model.AppSP;
 import com.foobnix.model.AppState;
+import com.foobnix.pdf.info.R;
 import com.foobnix.pdf.info.TintUtil;
 import com.foobnix.ui2.MainTabs2;
 import com.foobnix.ui2.adapter.TabsAdapter2;
@@ -287,11 +289,13 @@ public class SlidingTabLayout extends HorizontalScrollView {
             }
 
             if (tabTitleView != null) {
+                CharSequence pageTitle = adapter.getPageTitle(i);
                 if (AppState.get().tabWithNames) {
-                    tabTitleView.setText(adapter.getPageTitle(i));
+                    tabTitleView.setText(pageTitle);
                 } else {
                     tabTitleView.setText("");
                 }
+                tabTitleView.setContentDescription(pageTitle + " " + getContext().getString(R.string.tab));
                 // TintUtil.addTextView(tabTitleView);
 
                 Drawable drawable = getContext().getResources().getDrawable(adapter.getIconResId(i));

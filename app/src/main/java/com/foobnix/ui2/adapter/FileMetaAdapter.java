@@ -162,7 +162,7 @@ public class FileMetaAdapter extends AppRecycleAdapter<FileMeta, RecyclerView.Vi
             //ImageLoader.getInstance().cancelDisplayTask(holder.image);
             //ImageLoader.getInstance().cancelDisplayTask(holder.image);
             //LOG.d("onViewRecycled");
-           IMG.clear(holder.image);
+            IMG.clear(holder.image);
         }
 
     }
@@ -170,6 +170,7 @@ public class FileMetaAdapter extends AppRecycleAdapter<FileMeta, RecyclerView.Vi
     @Override
     public void onBindViewHolder(final RecyclerView.ViewHolder holderAll, final int position) {
         final FileMeta fileMeta = getItem(position);
+
 
         if (holderAll instanceof StarsTitleViewHolder) {
             final StarsTitleViewHolder holder = (StarsTitleViewHolder) holderAll;
@@ -210,6 +211,8 @@ public class FileMetaAdapter extends AppRecycleAdapter<FileMeta, RecyclerView.Vi
 
             final FileMetaViewHolder holder = (FileMetaViewHolder) holderAll;
 
+            holder.parent.setContentDescription(holder.getString(R.string.book)+ " " +fileMeta.getAuthor() + " " + fileMeta.getTitle() + " " + fileMeta.getExt());
+
             if (!AppState.get().isShowImages && adapterType == ADAPTER_COVERS) {
                 adapterType = ADAPTER_GRID;
             }
@@ -219,11 +222,11 @@ public class FileMetaAdapter extends AppRecycleAdapter<FileMeta, RecyclerView.Vi
 
             boolean needRefresh = TxtUtils.isEmpty(fileMeta.getPathTxt());
 
-            if (needRefresh) {
-                //FileMetaCore.reUpdateIfNeed(fileMeta);
-                // TempHolder.listHash++;
-                //AppDB.get().getDao().detach(fileMeta);
-            }
+            //if (needRefresh) {
+            //FileMetaCore.reUpdateIfNeed(fileMeta);
+            // TempHolder.listHash++;
+            //AppDB.get().getDao().detach(fileMeta);
+            //}
 
             IMG.getCoverPageWithEffect(holder.image, fileMeta.getPath(), IMG.getImageSize(), new Runnable() {
 
@@ -268,6 +271,7 @@ public class FileMetaAdapter extends AppRecycleAdapter<FileMeta, RecyclerView.Vi
 
         } else if (holderAll instanceof DirectoryViewHolder) {
             final DirectoryViewHolder holder = (DirectoryViewHolder) holderAll;
+            holder.parent.setContentDescription(holder.getString(R.string.folder) + " " + fileMeta.getTitle());
 
             holder.play.setVisibility(View.GONE);
             holder.title.setText(fileMeta.getPathTxt());
@@ -290,7 +294,7 @@ public class FileMetaAdapter extends AppRecycleAdapter<FileMeta, RecyclerView.Vi
                 holder.parent.setBackgroundColor(Color.TRANSPARENT);
             }
 
-            if (fileMeta.getIsStar()!=null && fileMeta.getIsStar()) {
+            if (fileMeta.getIsStar() != null && fileMeta.getIsStar()) {
                 holder.starIcon.setImageResource(R.drawable.star_1);
             } else {
                 holder.starIcon.setImageResource(R.drawable.star_2);
@@ -520,7 +524,10 @@ public class FileMetaAdapter extends AppRecycleAdapter<FileMeta, RecyclerView.Vi
 
     }
 
+
     private FileMeta bindFileMetaView(final FileMetaViewHolder holder, final int position) {
+
+
         if (position >= items.size()) {
             return new FileMeta();
         }
@@ -636,7 +643,14 @@ public class FileMetaAdapter extends AppRecycleAdapter<FileMeta, RecyclerView.Vi
             }
         }
         if (holder.path != null) {
-            holder.path.setText(fileMeta.getPathTxt());
+            if (AppState.get().isDisplayAnnotation) {
+                holder.path.setText(fileMeta.getAnnotation());
+                holder.path.setSingleLine(false);
+                holder.path.setLines(3);
+            } else {
+                holder.path.setText(fileMeta.getPathTxt());
+                holder.path.setSingleLine();
+            }
         }
 
         holder.browserExt.setText(fileMeta.getChild() != null ? fileMeta.getChild() : fileMeta.getExt());
@@ -692,6 +706,7 @@ public class FileMetaAdapter extends AppRecycleAdapter<FileMeta, RecyclerView.Vi
         TintUtil.setTintImageWithAlpha(holder.star, holder.parent.getContext() instanceof MainTabs2 ? TintUtil.getColorInDayNighth() : TintUtil.getColorInDayNighthBook());
 
         if (onStarClickListener != null) {
+            holder.star.setContentDescription(holder.c.getString(fileMeta.getIsStar()!=null && fileMeta.getIsStar() ? R.string.remove_from_favorites : R.string.add_to_favorites));
             holder.star.setOnClickListener(new OnClickListener() {
 
                 @Override
@@ -714,7 +729,6 @@ public class FileMetaAdapter extends AppRecycleAdapter<FileMeta, RecyclerView.Vi
                     return true;
                 }
             });
-        } else {
         }
         holder.star.setVisibility(ExtUtils.isExteralSD(fileMeta.getPath()) ? View.GONE : View.VISIBLE);
 
@@ -895,6 +909,8 @@ public class FileMetaAdapter extends AppRecycleAdapter<FileMeta, RecyclerView.Vi
 
         TxtUtils.setInkTextView(holder.title, holder.author, holder.path, holder.browserExt, holder.size, holder.date, holder.series, holder.idPercentText);
 
+        Apps.accessibilityButtonSize(holder.star,holder.menu);
+
         return fileMeta;
     }
 
@@ -1007,6 +1023,8 @@ public class FileMetaAdapter extends AppRecycleAdapter<FileMeta, RecyclerView.Vi
             remove = view.findViewById(R.id.delete);
 
             parent = view;
+
+
         }
     }
 

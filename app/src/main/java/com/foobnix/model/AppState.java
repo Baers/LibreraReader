@@ -19,6 +19,7 @@ import com.foobnix.opds.SamlibOPDS;
 import com.foobnix.pdf.info.AppsConfig;
 import com.foobnix.pdf.info.R;
 import com.foobnix.pdf.info.Urls;
+import com.foobnix.pdf.info.widget.DialogTranslateFromTo;
 import com.foobnix.pdf.info.wrapper.MagicHelper;
 import com.foobnix.ui2.AppDB;
 
@@ -176,10 +177,7 @@ public class AppState {
     public final static int READING_MODE_MUSICIAN = 3;
     public final static int READING_MODE_TAG_MANAGER = 4;
     public final static int READING_MODE_OPEN_WITH = 5;
-    public final static List<String> appDictionariesKeysTest = Arrays.asList(//
-            "pdf" //
-            //
-    );
+
     public final static List<String> appDictionariesKeys = Arrays.asList(//
             "search", //
             "lingvo", //
@@ -201,8 +199,13 @@ public class AppState {
 
             //
     );
-    public static Map<String, String[]> CONVERTERS = new LinkedHashMap<String, String[]>();
-    public static Map<String, String> TTS_ENGINES = new LinkedHashMap<String, String>();
+    public static final List<String> langCodes = Arrays.asList(//
+            "en", "ar", "cs", "de", "es", "fa", "fi", "fr", "he", //
+            "hi", "hu", "id", "it", "ja", "ko", "la", "lt", //
+            "nl", "no", "pl", "pt", "ro", "ru", "sk", "sv", //
+            "sw", "th", "tr", "uk", "vi", "ga", "bg", "ml", DialogTranslateFromTo.CHINESE_SIMPLE, DialogTranslateFromTo.CHINESE_TRADITIOANAL);
+    public static Map<String, String[]> CONVERTERS = new LinkedHashMap<>();
+    public static Map<String, String> TTS_ENGINES = new LinkedHashMap<>();
     public static int COLOR_WHITE = Color.WHITE;
     // public static int COLOR_BLACK = Color.parseColor("#030303");
     public static int COLOR_BLACK = Color.BLACK;
@@ -347,14 +350,10 @@ public class AppState {
     public boolean isEnableBC = false;
     @IgnoreHashCode
     public boolean stopReadingOnCall = true;
-
     @IgnoreHashCode
     public int appBrightness = AUTO_BRIGTNESS;
-
     @IgnoreHashCode
     public int appBrightnessNight = AUTO_BRIGTNESS;
-
-
     public volatile int fastReadSpeed = 200;
     public volatile int fastReadFontSize = 32;
     public volatile int fastManyWords = 2;
@@ -368,19 +367,13 @@ public class AppState {
     public boolean ttsTunnOnLastWord = false;
     @IgnoreHashCode
     public boolean isEnalbeTTSReplacements = true;
-
     public boolean isReferenceMode = false;
-
-
+    public boolean isEnableAccessibility = false;
     @IgnoreHashCode
     @Deprecated
     public String lineTTSReplacements;
-
-
     @IgnoreHashCode
     public String lineTTSReplacements3 = TTS_REPLACEMENTS;
-
-
     public List<Integer> nextKeys = NEXT_KEYS;
     public List<Integer> prevKeys = PREV_KEYS;
     @IgnoreHashCode
@@ -555,17 +548,12 @@ public class AppState {
     public int blueLightColor = BLUE_FILTER_DEFAULT_COLOR;
     @IgnoreHashCode
     public int blueLightAlpha = 30;
-
     @IgnoreHashCode
     public int blueLightAlphaNight = 30;
-
     @IgnoreHashCode
     public boolean isEnableBlueFilter = false;
-
     @IgnoreHashCode
     public boolean isEnableBlueFilterNight = false;
-
-
     public boolean proxyEnable = false;
     public String proxyServer = "";
     public int proxyPort = 0;
@@ -586,9 +574,14 @@ public class AppState {
     public boolean isAppPassword;
     public boolean isLoaded = false;
     public boolean isUseCalibreOpf = true;
+    public boolean isDisplayAnnotation = false;
+    public boolean isMirrorImage = false;
+    public boolean isDefaultHyphenLanguage = false;
+    public String defaultHyphenLanguageCode = "en";
+    public boolean isMenuIntegration = false;
 
     public static Map<String, String> getDictionaries(String input) {
-        final Map<String, String> providers = new LinkedHashMap<String, String>();
+        final Map<String, String> providers = new LinkedHashMap<>();
         String ln = AppState.get().toLang;
         String from = AppState.get().fromLang;
         String text = Uri.encode(input);
@@ -630,7 +623,7 @@ public class AppState {
     }
 
     public static List<Integer> stringToKyes(final String list) {
-        final List<Integer> res = new ArrayList<Integer>();
+        final List<Integer> res = new ArrayList<>();
 
         for (final String value : list.split(",")) {
             if (value != null && !value.trim().equals("")) {
@@ -669,10 +662,10 @@ public class AppState {
             isZoomInOutWithLock = false;
         }
 
+
         if (!AppsConfig.LIBRERA_READER.equals(Apps.getPackageName(a)) && !AppsConfig.PRO_LIBRERA_READER.equals(Apps.getPackageName(a))) {
             isShowWhatIsNewDialog = false;
         }
-
 
 
     }
@@ -689,17 +682,17 @@ public class AppState {
                 AppState.get().isShowPanelBookNameBookMode = false;
             }
 
-            try{
-                if(TxtUtils.isNotEmpty(AppState.get().lineTTSReplacements)){
-                    LinkedJSONObject o1 =  new LinkedJSONObject(AppState.get().lineTTSReplacements);
-                    LinkedJSONObject o3 =  new LinkedJSONObject(AppState.get().lineTTSReplacements3);
+            try {
+                if (TxtUtils.isNotEmpty(AppState.get().lineTTSReplacements)) {
+                    LinkedJSONObject o1 = new LinkedJSONObject(AppState.get().lineTTSReplacements);
+                    LinkedJSONObject o3 = new LinkedJSONObject(AppState.get().lineTTSReplacements3);
                     Iterator<String> keys = o1.keys();
-                    while(keys.hasNext()){
+                    while (keys.hasNext()) {
                         String key = keys.next();
-                        if(!key.startsWith("[")){
+                        if (!key.startsWith("[")) {
                             String value = o1.getString(key);
                             o3.put(key, value);
-                            LOG.d("migration", key,value);
+                            LOG.d("migration", key, value);
                         }
 
                     }
@@ -707,7 +700,7 @@ public class AppState {
                     AppState.get().lineTTSReplacements = "";
                 }
 
-            }catch (Exception e){
+            } catch (Exception e) {
                 LOG.e(e);
             }
 

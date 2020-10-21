@@ -8,6 +8,7 @@ import android.content.DialogInterface.OnDismissListener;
 import android.content.Intent;
 import android.content.IntentFilter;
 import android.graphics.Color;
+import android.os.Build;
 import android.os.Bundle;
 import android.os.Environment;
 import android.os.Handler;
@@ -37,6 +38,7 @@ import androidx.recyclerview.widget.RecyclerView;
 import androidx.recyclerview.widget.RecyclerView.OnScrollListener;
 import androidx.swiperefreshlayout.widget.SwipeRefreshLayout;
 
+import com.foobnix.android.utils.Apps;
 import com.foobnix.android.utils.BaseItemLayoutAdapter;
 import com.foobnix.android.utils.Dips;
 import com.foobnix.android.utils.Keyboards;
@@ -96,38 +98,7 @@ public class SearchFragment2 extends UIFragment<FileMeta> {
     ImageView sortOrder, myAutoCompleteImage, cleanFilter;
     View onRefresh, secondTopPanel;
     AutoCompleteTextView searchEditText;
-    BroadcastReceiver broadcastReceiver = new BroadcastReceiver() {
-
-        @Override
-        public void onReceive(Context context, Intent intent) {
-
-            if (BooksService.RESULT_SEARCH_FINISH.equals(intent.getStringExtra(Intent.EXTRA_TEXT))) {
-                searchAndOrderAsync();
-                searchEditText.setHint(R.string.search);
-                onRefresh.setActivated(true);
-            } else if (BooksService.RESULT_SEARCH_COUNT.equals(intent.getStringExtra(Intent.EXTRA_TEXT))) {
-                int count = intent.getIntExtra(Intent.EXTRA_INDEX, 0);
-                if (count > 0) {
-                    countBooks.setText("" + count);
-                }
-                searchEditText.setHint(R.string.searching_please_wait_);
-                onRefresh.setActivated(false);
-            } else if (BooksService.RESULT_BUILD_LIBRARY.equals(intent.getStringExtra(Intent.EXTRA_TEXT))) {
-                onRefresh.setActivated(false);
-                searchEditText.setHint(R.string.extracting_information_from_books);
-            }
-        }
-
-    };
     int countTitles = 0;
-    Runnable sortAndSeach = new Runnable() {
-
-        @Override
-        public void run() {
-            recyclerView.scrollToPosition(0);
-            searchAndOrderAsync();
-        }
-    };
     Runnable hideKeyboard = new Runnable() {
 
         @Override
@@ -151,6 +122,37 @@ public class SearchFragment2 extends UIFragment<FileMeta> {
 
             }
 
+        }
+    };
+    BroadcastReceiver broadcastReceiver = new BroadcastReceiver() {
+
+        @Override
+        public void onReceive(Context context, Intent intent) {
+
+            if (BooksService.RESULT_SEARCH_FINISH.equals(intent.getStringExtra(Intent.EXTRA_TEXT))) {
+                searchAndOrderAsync();
+                searchEditText.setHint(R.string.search);
+                onRefresh.setActivated(true);
+            } else if (BooksService.RESULT_SEARCH_COUNT.equals(intent.getStringExtra(Intent.EXTRA_TEXT))) {
+                int count = intent.getIntExtra("android.intent.extra.INDEX", 0);
+                if (count > 0) {
+                    countBooks.setText("" + count);
+                }
+                searchEditText.setHint(R.string.searching_please_wait_);
+                onRefresh.setActivated(false);
+            } else if (BooksService.RESULT_BUILD_LIBRARY.equals(intent.getStringExtra(Intent.EXTRA_TEXT))) {
+                onRefresh.setActivated(false);
+                searchEditText.setHint(R.string.extracting_information_from_books);
+            }
+        }
+
+    };
+    Runnable sortAndSeach = new Runnable() {
+
+        @Override
+        public void run() {
+            recyclerView.scrollToPosition(0);
+            searchAndOrderAsync();
         }
     };
     private final TextWatcher filterTextWatcher = new TextWatcher() {
@@ -301,6 +303,7 @@ public class SearchFragment2 extends UIFragment<FileMeta> {
     public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
         View view = inflater.inflate(R.layout.fragment_search2, container, false);
 
+
         LOG.d("Context-SF-getContext", getContext());
         LOG.d("Context-SF-getApplicationContext", getActivity().getApplicationContext());
         LOG.d("Context-SF-getBaseContext", getActivity().getBaseContext());
@@ -323,6 +326,7 @@ public class SearchFragment2 extends UIFragment<FileMeta> {
         searchEditText = (AutoCompleteTextView) view.findViewById(R.id.filterLine);
         recyclerView = (RecyclerView) view.findViewById(R.id.recyclerView);
 
+
         if (AppState.get().appTheme == AppState.THEME_DARK_OLED || (AppState.get().appTheme == AppState.THEME_DARK && TintUtil.color == Color.BLACK)) {
             searchEditText.setBackgroundResource(R.drawable.bg_search_edit_night);
         }
@@ -342,6 +346,7 @@ public class SearchFragment2 extends UIFragment<FileMeta> {
         });
 
         searchAdapter = new FileMetaAdapter();
+
         authorsAdapter = new AuthorsAdapter2();
 
         onGridlList = (ImageView) view.findViewById(R.id.onGridList);
@@ -407,7 +412,6 @@ public class SearchFragment2 extends UIFragment<FileMeta> {
             public void onClick(View v) {
                 AppState.get().isSortAsc = !AppState.get().isSortAsc;
                 searchAndOrderAsync();
-
             }
         });
         sortOrder.setOnLongClickListener(new OnLongClickListener() {
@@ -593,10 +597,23 @@ public class SearchFragment2 extends UIFragment<FileMeta> {
     }
 
     public void searchAndOrderAsync() {
+        if (Apps.isDestroyed(getActivity())) {
+            return;
+        }
         searchEditText.setHint(R.string.msg_loading);
         sortBy.setText(AppDB.SORT_BY.getByID(AppState.get().sortBy).getResName());
+
         sortOrder.setImageResource(AppState.get().isSortAsc ? R.drawable.glyphicons_602_chevron_down : R.drawable.glyphicons_601_chevron_up);
+
+        String order = getString(AppState.get().isSortAsc ? R.string.ascending : R.string.descending);
+        sortBy.setContentDescription(getString(R.string.cd_sort_results) + " " + sortBy.getText());
+        sortOrder.setContentDescription(order);
+
         populate();
+
+        Apps.accessibilityText(getActivity(), "" + sortBy.getContentDescription());
+
+
     }
 
     @Subscribe
@@ -852,6 +869,7 @@ public class SearchFragment2 extends UIFragment<FileMeta> {
         }
 
         showBookCount();
+
 
     }
 

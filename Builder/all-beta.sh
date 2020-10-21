@@ -2,7 +2,8 @@
 
 
 ### 1.16.1
-./link_to_mupdf_1.16.1.sh
+#./link_to_mupdf_1.16.1.sh
+./link_to_mupdf_master.sh
 
 cd ../
 
@@ -10,6 +11,7 @@ cd ../
 
 ./gradlew assembleFdroidRelease
 ./gradlew assembleAlphaRelease
+#./gradlew assembleLibreraRelease
 
 
 ### 1.11.1
@@ -20,6 +22,7 @@ cd Builder
 cd ../
 ./gradlew assembleProRelease
 ./gradlew assembleBetaRelease
+#./gradlew assembleLibreraRelease
 #./gradlew assembleHuaweiRelease
 
 ./gradlew copyApks -Pbeta

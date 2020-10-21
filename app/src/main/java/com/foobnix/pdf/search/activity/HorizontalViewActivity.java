@@ -24,6 +24,7 @@ import android.view.MenuItem.OnMenuItemClickListener;
 import android.view.View;
 import android.view.View.OnClickListener;
 import android.view.View.OnLongClickListener;
+import android.view.ViewGroup;
 import android.view.ViewTreeObserver.OnGlobalLayoutListener;
 import android.view.Window;
 import android.view.WindowManager;
@@ -43,6 +44,7 @@ import androidx.fragment.app.Fragment;
 import androidx.viewpager.widget.ViewPager;
 import androidx.viewpager.widget.ViewPager.OnPageChangeListener;
 
+import com.foobnix.android.utils.Apps;
 import com.foobnix.android.utils.Dips;
 import com.foobnix.android.utils.Keyboards;
 import com.foobnix.android.utils.LOG;
@@ -190,7 +192,7 @@ public class HorizontalViewActivity extends AdsFragmentActivity {
 
         @Override
         public void run() {
-
+            LOG.d("flippingRunnable");
             if (flippingTimer >= AppState.get().flippingInterval) {
                 flippingTimer = 0;
                 if (dc.getCurentPage() == dc.getPageCount() - 1) {
@@ -226,6 +228,7 @@ public class HorizontalViewActivity extends AdsFragmentActivity {
 
         @Override
         public void run() {
+            LOG.d("Update time and updateTimePower");
             try {
                 if (pagesTime != null) {
                     pagesTime.setText(UiSystemUtils.getSystemTime(HorizontalViewActivity.this));
@@ -321,6 +324,10 @@ public class HorizontalViewActivity extends AdsFragmentActivity {
                 AppState.get().isEditMode = false;
                 hideShow();
             }
+            if (fromUser) {
+                //Apps.accessibilityText(HorizontalViewActivity.this, getString(R.string.m_current_page) + " " + dc.getCurentPageFirst1());
+
+            }
         }
     };
     long keyTimeout = 0;
@@ -350,6 +357,11 @@ public class HorizontalViewActivity extends AdsFragmentActivity {
             progressDraw.updateProgress(pos);
 
             EventBus.getDefault().post(new MessagePageXY(MessagePageXY.TYPE_HIDE));
+
+            if (!TTSEngine.get().isPlaying()) {
+                Apps.accessibilityText(HorizontalViewActivity.this, getString(R.string.m_current_page) + " " + dc.getCurentPageFirst1());
+            }
+
 
         }
 
@@ -419,6 +431,8 @@ public class HorizontalViewActivity extends AdsFragmentActivity {
         }
 
         DocumentController.doRotation(this);
+        DocumentController.doContextMenu(this);
+
         clickUtils = new ClickUtils();
 
         super.onCreate(savedInstanceState);
@@ -447,6 +461,7 @@ public class HorizontalViewActivity extends AdsFragmentActivity {
         findViewById(R.id.showHypenLangPanel).setVisibility(View.GONE);
 
         viewPager = (VerticalViewPager) findViewById(R.id.pager2);
+        viewPager.setAccessibilityDelegate(new View.AccessibilityDelegate());
 
         parentParent = findViewById(R.id.parentParent);
         pannelBookTitle = findViewById(R.id.pannelBookTitle);
@@ -1011,6 +1026,7 @@ public class HorizontalViewActivity extends AdsFragmentActivity {
         });
 
         onClose = findViewById(R.id.bookClose);
+        Apps.accessibilityButtonSize(onClose);
         onClose.setVisibility(View.INVISIBLE);
 
         onClose.setOnClickListener(new View.OnClickListener() {
@@ -1217,9 +1233,6 @@ public class HorizontalViewActivity extends AdsFragmentActivity {
                     bottomIndicators.setVisibility(View.VISIBLE);
                     onModeChange.setVisibility(View.VISIBLE);
 
-                    AppSP.get().lastClosedActivity = HorizontalViewActivity.class.getSimpleName();
-                    AppSP.get().lastMode = HorizontalViewActivity.class.getSimpleName();
-                    LOG.d("lasta save", AppSP.get().lastClosedActivity);
 
                     PageImageState.get().isAutoFit = PageImageState.get().needAutoFit;
 
@@ -1241,14 +1254,19 @@ public class HorizontalViewActivity extends AdsFragmentActivity {
                     loadUI();
 
                     // AppState.get().isEditMode = false; //remember last
+                    if (AppState.get().isEnableAccessibility) {
+                        AppState.get().isEditMode = true;
+                    }
                     int pageFromUri = dc.getCurentPage();
                     updateUI(pageFromUri);
                     hideShow();
 
+                    Apps.accessibilityText(HorizontalViewActivity.this, getString(R.string.book_is_open), getString(R.string.m_current_page), " " + dc.getCurentPageFirst1());
+
+
                     EventBus.getDefault().post(new MessageAutoFit(pageFromUri));
                     seekBar.setOnSeekBarChangeListener(onSeek);
                     showHideInfoToolBar();
-
 
 
                     isInitPosistion = Dips.screenHeight() > Dips.screenWidth();
@@ -1271,6 +1289,8 @@ public class HorizontalViewActivity extends AdsFragmentActivity {
 
                         @Override
                         public void run() {
+                            AppState.get().isEditMode = true;
+                            hideShow();
                             DragingDialogs.textToSpeachDialog(anchor, dc);
                         }
                     });
@@ -1662,6 +1682,8 @@ public class HorizontalViewActivity extends AdsFragmentActivity {
         if (ttsActive != null) {
             ttsActive.setVisibility(TxtUtils.visibleIf(TTSEngine.get().isTempPausing()));
         }
+        AppSP.get().lastClosedActivity = HorizontalViewActivity.class.getSimpleName();
+        LOG.d("lasta save", AppSP.get().lastClosedActivity);
 
     }
 
@@ -1856,6 +1878,9 @@ public class HorizontalViewActivity extends AdsFragmentActivity {
         maxSeek.setText(info.textPage);
         currentSeek.setText(info.textMax);
         pagesCountIndicator.setText(info.chText);
+
+        currentSeek.setContentDescription(dc.getString(R.string.m_current_page) + " " + info.textMax);
+        maxSeek.setContentDescription(dc.getString(R.string.m_total_pages) + " " + info.textPage);
 
         seekBar.setProgress(page);
         if (dc != null) {
@@ -2136,6 +2161,14 @@ public class HorizontalViewActivity extends AdsFragmentActivity {
     }
 
     public void hideShow(boolean animated) {
+        if (AppState.get().isEnableAccessibility) {
+            animated = false;
+            AppState.get().isEditMode = true;
+            ttsFixPosition();
+        }
+
+
+
         updateBannnerTop();
         showPagesHelper();
 
@@ -2154,6 +2187,7 @@ public class HorizontalViewActivity extends AdsFragmentActivity {
             adFrame.setVisibility(AppState.get().isEditMode ? View.VISIBLE : View.GONE);
 
             DocumentController.chooseFullScreen(this, AppState.get().fullScreenMode);
+            ttsFixPosition();
             return;
         }
 
@@ -2204,6 +2238,8 @@ public class HorizontalViewActivity extends AdsFragmentActivity {
 
                     Keyboards.invalidateEink(parentParent);
 
+                    ttsFixPosition();
+
                 }
             });
 
@@ -2234,6 +2270,7 @@ public class HorizontalViewActivity extends AdsFragmentActivity {
 
                     Keyboards.invalidateEink(parentParent);
 
+                    ttsFixPosition();
                 }
 
             });
@@ -2244,6 +2281,16 @@ public class HorizontalViewActivity extends AdsFragmentActivity {
             DocumentController.chooseFullScreen(this, AppState.get().fullScreenMode);
             pagerAdapter.notifyDataSetChanged();
         }
+    }
+
+    private void ttsFixPosition() {
+        RelativeLayout.LayoutParams layoutParams = (RelativeLayout.LayoutParams) ttsActive.getLayoutParams();
+        if (AppState.get().isEditMode) {
+            layoutParams.addRule(RelativeLayout.ALIGN_PARENT_BOTTOM, 0);
+        } else {
+            layoutParams.addRule(RelativeLayout.ALIGN_PARENT_BOTTOM);
+        }
+        ttsActive.setLayoutParams(layoutParams);
     }
 
     @Override
@@ -2445,7 +2492,6 @@ public class HorizontalViewActivity extends AdsFragmentActivity {
 
     @Override
     public void onFinishActivity() {
-        AppSP.get().lastClosedActivity = null;
         if (handler != null) {
             handler.removeCallbacksAndMessages(null);
         }

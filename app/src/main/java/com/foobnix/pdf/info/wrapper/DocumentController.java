@@ -2,8 +2,10 @@ package com.foobnix.pdf.info.wrapper;
 
 import android.annotation.SuppressLint;
 import android.app.Activity;
+import android.content.ComponentName;
 import android.content.Context;
 import android.content.pm.ActivityInfo;
+import android.content.pm.PackageManager;
 import android.graphics.PointF;
 import android.net.Uri;
 import android.os.Build;
@@ -24,7 +26,6 @@ import com.foobnix.android.utils.MyMath;
 import com.foobnix.android.utils.ResultResponse;
 import com.foobnix.android.utils.Safe;
 import com.foobnix.android.utils.TxtUtils;
-import com.foobnix.android.utils.Vibro;
 import com.foobnix.dao2.FileMeta;
 import com.foobnix.model.AppBook;
 import com.foobnix.model.AppBookmark;
@@ -107,9 +108,12 @@ public abstract class DocumentController {
         @Override
         public void run() {
             try {
+                if (activity == null || activity.isDestroyed()) {
+                    LOG.d("Timer-Task Destroyed");
+                    return;
+                }
                 timerTask.run();
                 handler.postDelayed(timer, timeout);
-                LOG.d("Timer-Task Run");
             } catch (Exception e) {
                 LOG.e(e);
             }
@@ -302,6 +306,19 @@ public abstract class DocumentController {
         }
     }
 
+    public static void doContextMenu(Activity a) {
+        PackageManager pm = a.getApplicationContext().getPackageManager();
+        ComponentName compName = new ComponentName(a.getPackageName(), "com.foobnix.zipmanager.SendReceiveActivityAlias");
+        if (AppState.get().isMenuIntegration) {
+            pm.setComponentEnabledSetting(compName, PackageManager.COMPONENT_ENABLED_STATE_ENABLED, PackageManager.DONT_KILL_APP);
+            LOG.d("COMPONENT_ENABLED_STATE_ENABLED");
+        } else {
+            pm.setComponentEnabledSetting(compName, PackageManager.COMPONENT_ENABLED_STATE_DISABLED, PackageManager.DONT_KILL_APP);
+            LOG.d("COMPONENT_ENABLED_STATE_DISABLED");
+        }
+
+    }
+
     public boolean isPasswordProtected() {
         try {
             return TxtUtils.isNotEmpty(activity.getIntent().getStringExtra(EXTRA_PASSWORD));
@@ -485,12 +502,6 @@ public abstract class DocumentController {
 
     }
 
-    public void onChangeTextSelection() {
-        Vibro.vibrate();
-        AppState.get().isAllowTextSelection = !AppState.get().isAllowTextSelection;
-        String txt = AppState.get().isAllowTextSelection ? getString(R.string.text_highlight_mode_is_enable) : getString(R.string.text_highlight_mode_is_disable);
-        Toast.makeText(getActivity(), txt, Toast.LENGTH_LONG).show();
-    }
 
     public boolean isBookMode() {
         return AppSP.get().readingMode == AppState.READING_MODE_BOOK;

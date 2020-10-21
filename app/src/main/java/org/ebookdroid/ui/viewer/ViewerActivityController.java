@@ -27,6 +27,7 @@ import com.foobnix.pdf.info.model.OutlineLinkWrapper;
 import com.foobnix.pdf.info.wrapper.DocumentController;
 import com.foobnix.pdf.info.wrapper.DocumentWrapperUI;
 import com.foobnix.pdf.search.activity.HorizontalModeController;
+import com.foobnix.pdf.search.activity.HorizontalViewActivity;
 import com.foobnix.sys.TempHolder;
 import com.foobnix.sys.VerticalModeController;
 import com.foobnix.tts.TTSEngine;
@@ -222,6 +223,9 @@ public class ViewerActivityController extends ActionController<VerticalViewActiv
 
 
 
+
+
+
             }
         }));
     }
@@ -347,10 +351,7 @@ public class ViewerActivityController extends ActionController<VerticalViewActiv
             String file = a.getIntent().getData().getPath();
 
             AppSP.get().lastBookPath = file;
-            AppSP.get().lastClosedActivity = VerticalViewActivity.class.getSimpleName();
-            AppSP.get().lastMode = VerticalViewActivity.class.getSimpleName();
 
-            LOG.d("lasta save", AppSP.get().lastClosedActivity);
 
             LOG.d("createWrapper", file);
             if (ExtUtils.isTextFomat(file)) {
@@ -374,6 +375,8 @@ public class ViewerActivityController extends ActionController<VerticalViewActiv
         if (wrapperControlls != null) {
             wrapperControlls.onResume();
         }
+        AppSP.get().lastClosedActivity = VerticalViewActivity.class.getSimpleName();
+        LOG.d("lasta save", AppSP.get().lastClosedActivity);
     }
 
     public void onConfigChanged() {

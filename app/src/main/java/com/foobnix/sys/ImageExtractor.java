@@ -4,6 +4,7 @@ import android.content.Context;
 import android.content.SharedPreferences;
 import android.graphics.Bitmap;
 import android.graphics.Bitmap.CompressFormat;
+import android.graphics.BitmapFactory;
 import android.graphics.Canvas;
 import android.graphics.Color;
 import android.graphics.Matrix;
@@ -39,6 +40,7 @@ import com.foobnix.pdf.info.Clouds;
 import com.foobnix.pdf.info.ExtUtils;
 import com.foobnix.pdf.info.IMG;
 import com.foobnix.pdf.info.PageUrl;
+import com.foobnix.pdf.info.R;
 import com.foobnix.pdf.info.model.BookCSS;
 import com.foobnix.pdf.info.wrapper.MagicHelper;
 import com.foobnix.pdf.search.activity.HorizontalViewActivity;
@@ -56,6 +58,8 @@ import org.ebookdroid.core.codec.CodecPage;
 import org.ebookdroid.core.codec.CodecPageInfo;
 import org.ebookdroid.core.crop.PageCropper;
 import org.ebookdroid.droids.FolderContext;
+import org.ebookdroid.droids.MdContext;
+import org.ebookdroid.droids.mupdf.codec.TextWord;
 import org.ebookdroid.droids.mupdf.codec.exceptions.MuPdfPasswordException;
 
 import java.io.ByteArrayInputStream;
@@ -275,6 +279,8 @@ public class ImageExtractor {
         }
 
         pageUrl.setPath(unZipPath);
+        LOG.d("proccessCoverPage unZipPath", unZipPath);
+
 
         Bitmap cover = null;
 
@@ -307,6 +313,9 @@ public class ImageExtractor {
         } else if (ExtUtils.isFontFile(unZipPath)) {
             cover = BaseExtractor.getBookCoverWithTitle("font", "", true);
             pageUrl.tempWithWatermakr = true;
+        } else if (unZipPath.endsWith(MdContext.SUMMARY_MD)) {
+            cover = BitmapFactory.decodeResource(LibreraApp.context.getResources(), R.drawable.gitbook);
+            LOG.d("SUMMARY_MD",unZipPath);
         }
 
         if (cover == null) {
@@ -339,6 +348,7 @@ public class ImageExtractor {
         }
 
     }
+
     public Bitmap proccessOtherPage(PageUrl pageUrl) {
         int page = pageUrl.getPage();
         String path = pageUrl.getPath();
@@ -391,7 +401,7 @@ public class ImageExtractor {
             if (isNeedDisableMagicInPDFDjvu) {
                 bitmapRef = pageCodec.renderBitmapSimple(width, height, rectF);
             } else {
-                bitmapRef = pageCodec.renderBitmap(width, height, rectF,false);
+                bitmapRef = pageCodec.renderBitmap(width, height, rectF, false);
             }
 
             bitmap = bitmapRef.getBitmap();
@@ -465,12 +475,17 @@ public class ImageExtractor {
             bitmap = bitmap1;
         }
 
+        LOG.d("pageUrl", pageUrl.isDoText(), pageCodec.isRecycled(), codeCache.isRecycled(), AppSP.get().lastClosedActivity);
         if (pageUrl.isDoText() && !pageCodec.isRecycled() && !codeCache.isRecycled()) {
+            LOG.d("pageUrl run", AppSP.get().lastClosedActivity);
             if (HorizontalViewActivity.class.getSimpleName().equals(AppSP.get().lastClosedActivity)) {
-                PageImageState.get().pagesText.put(pageUrl.getPage(), pageCodec.getText());
+                TextWord[][] text = pageCodec.getText();
+                PageImageState.get().pagesText.put(pageUrl.getPage(), text);
                 PageImageState.get().pagesLinks.put(pageUrl.getPage(), pageCodec.getPageLinks());
+                LOG.d("pageUrl Load-page-text", text != null ? text.length : 0);
             }
         }
+
 
         if (!pageCodec.isRecycled()) {
             pageCodec.recycle();
@@ -500,7 +515,7 @@ public class ImageExtractor {
 
         bitmap.recycle();
         codecDocumentLocal.getPage(page).recycle();
-        Bitmap result = codecDocumentLocal.getPage(page).renderBitmap((int) nWidth, (int) nHeiht, rectF,false).getBitmap();
+        Bitmap result = codecDocumentLocal.getPage(page).renderBitmap((int) nWidth, (int) nHeiht, rectF, false).getBitmap();
         return new Pair<Bitmap, RectF>(result, rectF);
 
     }
@@ -622,7 +637,7 @@ public class ImageExtractor {
                 try {
                     MagicHelper.isNeedBC = false;
                     Bitmap proccessCoverPage = proccessCoverPage(pageUrl);
-                    return  bitmapToStreamRAW(generalCoverWithEffect(pageUrl, proccessCoverPage));
+                    return bitmapToStreamRAW(generalCoverWithEffect(pageUrl, proccessCoverPage));
                 } finally {
                     MagicHelper.isNeedBC = true;
                 }

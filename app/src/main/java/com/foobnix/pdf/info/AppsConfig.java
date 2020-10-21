@@ -5,8 +5,10 @@ import android.content.pm.PackageManager;
 import android.content.pm.PackageManager.NameNotFoundException;
 import android.os.Build;
 
+import com.foobnix.android.utils.Apps;
 import com.foobnix.android.utils.Dips;
 import com.foobnix.android.utils.LOG;
+import com.foobnix.model.AppState;
 import com.google.android.gms.common.ConnectionResult;
 import com.google.android.gms.common.GoogleApiAvailability;
 
@@ -29,16 +31,22 @@ public class AppsConfig {
     public static final boolean IS_FDROID = BuildConfig.FLAVOR.equals("fdroid") || BuildConfig.FLAVOR.equals("huawei");
     public static final boolean IS_BETA = BuildConfig.FLAVOR.equals("beta");
     public static final boolean IS_LOG = BuildConfig.FLAVOR.equals("alpha") || BuildConfig.FLAVOR.equals("beta");
+    public static boolean IS_NO_ADS = false;
 
     public final static ExecutorService executorService = Executors.newFixedThreadPool(2);
 
 
-
-    public static  boolean isPDF_DRAW_ENABLE(){
-        return LibreraApp.MUPDF_VERSION  == MUPDF_1_11;
+    public static boolean isPDF_DRAW_ENABLE() {
+        return LibreraApp.MUPDF_VERSION == MUPDF_1_11;
     }
 
     public static boolean checkIsProInstalled(final Context a) {
+        if (IS_NO_ADS) {
+            LOG.d("no-ads error");
+
+            return true;
+        }
+
         if (a == null) {
             LOG.d("no-ads error context null");
             return true;
@@ -51,6 +59,9 @@ public class AppsConfig {
         if (Build.VERSION.SDK_INT <= 16 || Dips.isEInk()) {
             LOG.d("no-ads old device or eink");
             //no ads for old android and eink
+            return true;
+        }
+        if (AppState.get().isEnableAccessibility) {
             return true;
         }
 

@@ -91,6 +91,8 @@ public class VerticalViewActivity extends AbstractActionActivity<VerticalViewAct
     public void onCreate(final Bundle savedInstanceState) {
         intetrstialTimeoutSec = ADS.FULL_SCREEN_TIMEOUT_SEC;
         DocumentController.doRotation(this);
+        DocumentController.doContextMenu(this);
+
 
 
         FileMetaCore.checkOrCreateMetaInfo(this);
@@ -145,6 +147,7 @@ public class VerticalViewActivity extends AbstractActionActivity<VerticalViewAct
         frameLayout = (FrameLayout) findViewById(R.id.documentView);
 
         view = new PdfSurfaceView(getController());
+
 
         frameLayout.addView(view.getView());
 

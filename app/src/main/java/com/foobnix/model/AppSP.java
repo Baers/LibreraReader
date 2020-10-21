@@ -15,7 +15,6 @@ public class AppSP {
     private static AppSP instance = new AppSP();
     public String lastBookPath;
     public String lastClosedActivity;
-    public String lastMode;
     public int lastBookPage = 0;
     public int lastBookPageCount = 0;
     public int tempBookPage = 0;
@@ -31,7 +30,7 @@ public class AppSP {
     public int readingMode = AppState.READING_MODE_BOOK;
     public long syncTime;
     public int syncTimeStatus;
-    public String hypenLang;
+    public String hypenLang = null;
     public boolean isCut = false;
     public boolean isDouble = false;
     public boolean isDoubleCoverAlone = false;
